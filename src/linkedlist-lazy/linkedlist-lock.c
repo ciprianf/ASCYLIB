@@ -1,8 +1,8 @@
-/*   
+/*
  *   File: linkedlist-lock.c
- *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>, 
+ *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>,
  *  	     Vasileios Trigonakis <vasileios.trigonakis@epfl.ch>
- *   Description: 
+ *   Description:
  *   linkedlist-lock.c is part of ASCYLIB
  *
  * Copyright (c) 2014 Vasileios Trigonakis <vasileios.trigonakis@epfl.ch>,
@@ -24,26 +24,15 @@
 #include "intset.h"
 #include "utils.h"
 
-__thread ssmem_allocator_t* alloc;
+__thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 node_l_t*
 new_node_l(skey_t key, sval_t val, node_l_t* next, int initializing)
 {
   volatile node_l_t *node;
-#if GC == 1
-  if (initializing)		/* for initialization AND the coupling algorithm */
-    {
-      node = (volatile node_l_t *) ssalloc(sizeof(node_l_t));
-    }
-  else
-    {
-      node = (volatile node_l_t *) ssmem_alloc(alloc, sizeof(node_l_t));
-    }
-#else
-  node = (volatile node_l_t *) ssalloc(sizeof(node_l_t));
-#endif
-  
-  if (node == NULL) 
+  node = (volatile node_l_t *) memalloc_alloc(0, sizeof(node_l_t));
+
+  if (node == NULL)
     {
       perror("malloc @ new_node");
       exit(1);
@@ -70,14 +59,13 @@ intset_l_t *set_new_l()
   intset_l_t *set;
   node_l_t *min, *max;
 
-  if ((set = (intset_l_t *)ssalloc_aligned(CACHE_LINE_SIZE, sizeof(intset_l_t))) == NULL) 
+  if ((set = (intset_l_t *)ssalloc_aligned(CACHE_LINE_SIZE, sizeof(intset_l_t))) == NULL)
     {
       perror("malloc");
       exit(1);
     }
 
   max = new_node_l(KEY_MAX, 0, NULL, 1);
-  /* ssalloc_align_alloc(0); */
   min = new_node_l(KEY_MIN, 0, max, 1);
   set->head = min;
 
@@ -96,7 +84,7 @@ intset_l_t *set_new_l()
 }
 
 void
-node_delete_l(node_l_t *node) 
+node_delete_l(node_l_t *node)
 {
   DESTROY_LOCK(&node->lock);
 #if GC == 1
@@ -109,7 +97,7 @@ void set_delete_l(intset_l_t *set)
   node_l_t *node, *next;
 
   node = set->head;
-  while (node != NULL) 
+  while (node != NULL)
     {
       next = node->next;
       DESTROY_LOCK(&node->lock);
@@ -127,7 +115,7 @@ int set_size_l(intset_l_t *set)
 
   /* We have at least 2 elements */
   node = set->head->next;
-  while (node->next != NULL) 
+  while (node->next != NULL)
     {
       size++;
       node = node->next;
@@ -135,7 +123,3 @@ int set_size_l(intset_l_t *set)
 
   return size;
 }
-
-
-
-	

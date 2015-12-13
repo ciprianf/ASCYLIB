@@ -1,8 +1,8 @@
-/*   
+/*
  *   File: linkedlist-lock.h
- *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>, 
+ *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>,
  *  	     Vasileios Trigonakis <vasileios.trigonakis@epfl.ch>
- *   Description: 
+ *   Description:
  *   linkedlist-lock.h is part of ASCYLIB
  *
  * Copyright (c) 2014 Vasileios Trigonakis <vasileios.trigonakis@epfl.ch>,
@@ -41,6 +41,7 @@
 #include "common.h"
 #include "utils.h"
 #include "measurements.h"
+#include "memalloc.h"
 #include "ssalloc.h"
 #include "ssmem.h"
 
@@ -49,7 +50,6 @@
 #define DEFAULT_EFFECTIVE		1
 
 static volatile int stop;
-extern __thread ssmem_allocator_t* alloc;
 
 typedef volatile struct node_l
 {
@@ -67,7 +67,7 @@ typedef volatile struct node_l
 
 STATIC_ASSERT(sizeof(node_l_t) == 32, "sizeof(node_l_t) == 32");
 
-typedef ALIGNED(CACHE_LINE_SIZE) struct intset_l 
+typedef ALIGNED(CACHE_LINE_SIZE) struct intset_l
 {
   node_l_t* head;
 #if defined(LL_GLOBAL_LOCK)

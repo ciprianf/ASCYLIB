@@ -1,6 +1,6 @@
-/*   
+/*
  *   File: lazy.c
- *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>, 
+ *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>,
  *  	     Vasileios Trigonakis <vasileios.trigonakis@epfl.ch>
  *   Description: A Lazy Concurrent List-Based Set Algorithm,
  *   S. Heller, M. Herlihy, V. Luchangco, M. Moir, W.N. Scherer III, N. Shavit
@@ -32,7 +32,7 @@ RETRY_STATS_VARS;
  * points to curr to verify that the entries are adjacent and present in the list.
  */
 inline int
-parse_validate(node_l_t* pred, node_l_t* curr) 
+parse_validate(node_l_t* pred, node_l_t* curr)
 {
   return (!pred->marked && !curr->marked && (pred->next == curr));
 }
@@ -52,7 +52,7 @@ parse_find(intset_l_t *set, skey_t key)
     {
       res = curr->val;
     }
-  
+
   return res;
 }
 
@@ -61,7 +61,7 @@ parse_insert(intset_l_t *set, skey_t key, sval_t val)
 {
   node_l_t *curr, *pred, *newnode;
   int result = -1;
-	
+
   do
     {
       PARSE_TRY();
@@ -75,7 +75,7 @@ parse_insert(intset_l_t *set, skey_t key, sval_t val)
 
       UPDATE_TRY();
 
-#if LAZY_RO_FAIL == 1 
+#if LAZY_RO_FAIL == 1
       if (curr->key == key)
 	{
 	  if (unlikely(curr->marked))
@@ -92,14 +92,14 @@ parse_insert(intset_l_t *set, skey_t key, sval_t val)
       if (parse_validate(pred, curr))
 	{
 	  result = (curr->key != key);
-	  if (result) 
+	  if (result)
 	    {
 	      newnode = new_node_l(key, val, curr, 0);
 #ifdef __tile__
   MEM_BARRIER;
 #endif
 	      pred->next = newnode;
-	    } 
+	    }
 	}
       GL_UNLOCK(set->lock);
       UNLOCK(ND_GET_LOCK(pred));
@@ -109,7 +109,7 @@ parse_insert(intset_l_t *set, skey_t key, sval_t val)
 }
 
 /*
- * Logically remove an element by setting a mark bit to 1 
+ * Logically remove an element by setting a mark bit to 1
  * before removing it physically.
  */
 sval_t
@@ -118,7 +118,7 @@ parse_delete(intset_l_t *set, skey_t key)
   node_l_t *pred, *curr;
   sval_t result = 0;
   int done = 0;
-	
+
   do
     {
       PARSE_TRY();
@@ -132,7 +132,7 @@ parse_delete(intset_l_t *set, skey_t key)
 
       UPDATE_TRY();
 
-#if LAZY_RO_FAIL == 1 
+#if LAZY_RO_FAIL == 1
       if (curr->key != key)
 	{
 	  return false;
@@ -151,9 +151,7 @@ parse_delete(intset_l_t *set, skey_t key)
 	      node_l_t* c_nxt = curr->next;
 	      curr->marked = 1;
 	      pred->next = c_nxt;
-#if GC == 1
-	      ssmem_free(alloc, (void*) curr);
-#endif
+        memalloc_free(0, (void*) curr);
 	    }
 	  done = 1;
 	}

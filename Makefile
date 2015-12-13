@@ -135,7 +135,7 @@ slppopp: lfsl_fraser lbsl_herlihy_lb lbsl_optik lbsl_optik1 lbsl_optik2
 
 qu: lbqu_ms lfqu_ms lbqu_optik0 lbqu_optik1 lbqu_optik2 lbqu_optik2a lbqu_optik3 lbqu_optik4 lbqu_optik5
 
-quppopp: lbqu_ms lfqu_ms lbqu_optik0 lbqu_optik1 lbqu_optik2 lbqu_optik3 
+quppopp: lbqu_ms lfqu_ms lbqu_optik0 lbqu_optik1 lbqu_optik2 lbqu_optik3
 
 lbqu_ms:
 	$(MAKE) "LOCK=MCS" src/queue-ms_lb
@@ -269,7 +269,7 @@ lbll_pugh_no_ro:
 	$(MAKE) "RO_FAIL=0" src/linkedlist-pugh
 
 lbll_lazy:
-	$(MAKE) src/linkedlist-lazy
+	$(MAKE) "GC=2" src/linkedlist-lazy
 
 lbll_lazy_no_ro:
 	$(MAKE) "RO_FAIL=0" src/linkedlist-lazy
@@ -448,4 +448,3 @@ $(TESTS):
 
 $(EXTERNALS):
 	$(MAKE) -C $@ $(TARGET)
-
