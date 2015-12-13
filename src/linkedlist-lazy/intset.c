@@ -1,8 +1,8 @@
-/*   
+/*
  *   File: intset.c
- *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>, 
+ *   Author: Vincent Gramoli <vincent.gramoli@sydney.edu.au>,
  *  	     Vasileios Trigonakis <vasileios.trigonakis@epfl.ch>
- *   Description: 
+ *   Description:
  *   intset.c is part of ASCYLIB
  *
  * Copyright (c) 2014 Vasileios Trigonakis <vasileios.trigonakis@epfl.ch>,
@@ -23,21 +23,31 @@
 
 #include "lazy.h"
 #include "utils.h"
+#include "memalloc.h"
 
 sval_t
 set_contains_l(intset_l_t* set, skey_t key)
 {
-      return parse_find(set, key);
+      memalloc_unsafe_to_reclaim();
+      sval_t r = parse_find(set, key);
+      memalloc_safe_to_reclaim();
+      return r;
 }
 
 int
 set_add_l(intset_l_t* set, skey_t key, sval_t val)
-{  
-      return parse_insert(set, key, val);
+{
+      memalloc_unsafe_to_reclaim();
+      int r = parse_insert(set, key, val);
+      memalloc_safe_to_reclaim();
+      return r;
 }
 
 sval_t
 set_remove_l(intset_l_t* set, skey_t key)
 {
-      return parse_delete(set, key);
+      memalloc_unsafe_to_reclaim();
+      sval_t r = parse_delete(set, key);
+      memalloc_safe_to_reclaim();
+      return r;
 }
