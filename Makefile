@@ -269,7 +269,7 @@ lbll_pugh_no_ro:
 	$(MAKE) "RO_FAIL=0" src/linkedlist-pugh
 
 lbll_lazy:
-	$(MAKE) src/linkedlist-lazy
+	$(MAKE) "GC=1" src/linkedlist-lazy
 
 lbll_lazy_no_ro:
 	$(MAKE) "RO_FAIL=0" src/linkedlist-lazy

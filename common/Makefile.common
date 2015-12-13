@@ -219,6 +219,7 @@ ifeq ($(ARCH_NAME), x86_64)
     LDFLAGS += -m64
     SSPFD = -lsspfd_x86_64
     LDFLAGS += -L$(LIBSSMEM)/lib -lssmem_x86_64
+		LDFLAGS += -L$(LIBGCMALLOC)/lib -lgcmalloc_x86_64
 endif
 
 ifeq ($(ARCH_NAME), sun4v)
@@ -272,7 +273,11 @@ else
 		ifeq ($(GC),0)
 			CFLAGS += -DGC=0
 		else
-			CFLAGS += -DGC=1
+			ifeq ($(GC),1)
+				CFLAGS += -DGC=1
+			else
+				CFLAGS += -DGC=2
+			endif
 		endif
 	endif
 

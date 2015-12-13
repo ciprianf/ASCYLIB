@@ -41,6 +41,7 @@
 #include "common.h"
 #include "utils.h"
 #include "measurements.h"
+#include "memalloc.h"
 #include "ssalloc.h"
 #include "ssmem.h"
 

@@ -24,24 +24,13 @@
 #include "intset.h"
 #include "utils.h"
 
-__thread ssmem_allocator_t* alloc;
+__thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 node_l_t*
 new_node_l(skey_t key, sval_t val, node_l_t* next, int initializing)
 {
   volatile node_l_t *node;
-#if GC == 1
-  if (initializing)		/* for initialization AND the coupling algorithm */
-    {
-      node = (volatile node_l_t *) ssalloc(sizeof(node_l_t));
-    }
-  else
-    {
-      node = (volatile node_l_t *) ssmem_alloc(alloc, sizeof(node_l_t));
-    }
-#else
-  node = (volatile node_l_t *) ssalloc(sizeof(node_l_t));
-#endif
+  node = (volatile node_l_t *) memalloc_alloc(0, sizeof(node_l_t));
   
   if (node == NULL) 
     {
