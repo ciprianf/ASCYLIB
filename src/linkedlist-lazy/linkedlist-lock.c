@@ -88,12 +88,10 @@ void
 node_delete_l(node_l_t *node) 
 {
   DESTROY_LOCK(&node->lock);
-#if GC == 1
-  ssfree((void*) node);
-#endif
+  memalloc_free(0, (void*)node);
 }
 
-void set_delete_l(intset_l_t *set)
+static void set_delete_l_impl(intset_l_t *set)
 {
   node_l_t *node, *next;
 
@@ -102,14 +100,19 @@ void set_delete_l(intset_l_t *set)
     {
       next = node->next;
       DESTROY_LOCK(&node->lock);
-      /* free(node); */
-      ssfree((void*) node);		/* TODO : fix with ssmem */
+      memalloc_free(0, (void*)node);
       node = next;
     }
-  ssfree(set);
+  memalloc_free(0, (void*)set);
 }
 
-int set_size_l(intset_l_t *set)
+void set_delete_l(intset_l_t *set) {
+    memalloc_unsafe_to_reclaim();
+    set_delete_l_impl(set);
+    memalloc_safe_to_reclaim();
+}
+
+static int set_size_l_impl(intset_l_t *set)
 {
   int size = 0;
   node_l_t *node;
@@ -125,6 +128,11 @@ int set_size_l(intset_l_t *set)
   return size;
 }
 
-
+int set_size_l(intset_l_t *set) {
+    memalloc_unsafe_to_reclaim();
+    int r = set_size_l_impl(set);
+    memalloc_unsafe_to_reclaim();
+    return r;
+}
 
 	

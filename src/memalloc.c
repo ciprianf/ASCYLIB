@@ -53,3 +53,14 @@ void memalloc_free(int index, void *ptr) {
 		ssfree(ptr);
 	#endif
 }
+
+void memalloc_unsafe_to_reclaim() {
+	#if GC == 2
+		gcmem_unsafe_to_reclaim();
+	#endif
+}
+void memalloc_safe_to_reclaim() {
+	#if GC == 2
+		gcmem_safe_to_reclaim();
+	#endif
+}
