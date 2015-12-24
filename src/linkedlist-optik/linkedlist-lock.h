@@ -42,15 +42,13 @@
 #include "common.h"
 #include "utils.h"
 #include "measurements.h"
-#include "ssalloc.h"
-#include "ssmem.h"
+#include "memalloc.h"
 
 #define DEFAULT_LOCKTYPE	  	2
 #define DEFAULT_ALTERNATE		0
 #define DEFAULT_EFFECTIVE		1
 
 static volatile int stop;
-extern __thread ssmem_allocator_t* alloc;
 
 typedef volatile struct node_l
 {

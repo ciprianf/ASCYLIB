@@ -23,26 +23,14 @@
 
 #include "linkedlist.h"
 
-__thread ssmem_allocator_t* alloc;
+__thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 node_t*
 new_node(skey_t key, sval_t val, node_t* next, int initializing)
 {
   volatile node_t* node;
 
-#if GC == 1
-  if (unlikely(initializing))
-    {
-      node = (volatile node_t *) ssalloc(sizeof(node_t));
-    }
-  else
-    {
-      node = (volatile node_t *) ssmem_alloc(alloc, sizeof(node_t));
-    }
-
-#else
-  node = (volatile node_t *) ssalloc(sizeof(node_t));
-#endif
+  node = memalloc_alloc(sizeof(node_t));
 
   if (node == NULL) 
     {
@@ -78,14 +66,15 @@ set_new()
 void set_delete(intset_t *set)
 {
   node_t *node, *next;
-
+  memalloc_unsafe_to_reclaim();
   node = set->head;
   while (node != NULL) {
     next = node->next;
-    free((void*) node);
+    memalloc_free((void*) node);
     node = next;
   }
-  free(set);
+  memalloc_safe_to_reclaim();
+  ssfree(set);
 }
 
 

@@ -151,7 +151,7 @@ parse_delete(intset_l_t *set, skey_t key)
 	      node_l_t* c_nxt = curr->next;
 	      curr->marked = 1;
 	      pred->next = c_nxt;
-        memalloc_free(0, (void*) curr);
+        memalloc_free((void*) curr);
 	    }
 	  done = 1;
 	}

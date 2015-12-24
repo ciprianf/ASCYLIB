@@ -17,6 +17,9 @@ measurements.o:
 ssalloc.o:
 	$(CC) $(CFLAGS) -c -o $(BUILDIR)/ssalloc.o $(PROF)/ssalloc.c
 
+memalloc.o: ssalloc.o
+	$(CC) $(CFLAGS) -c -o $(BUILDIR)/memalloc.o $(BUILDIR)/ssalloc.o $(PROF)/memalloc.c
+
 linkedlist.o: 
 	$(CC) $(CFLAGS) -c -o $(BUILDIR)/linkedlist.o linkedlist.c
 
@@ -29,8 +32,8 @@ intset.o: linkedlist.h harris.h
 test.o: linkedlist.h harris.h intset.h
 	$(CC) $(CFLAGS) -c -o $(BUILDIR)/test.o $(TEST_FILE)
 
-main: measurements.o ssalloc.o linkedlist.o harris.o harris.o intset.o test.o $(TMILB)
-	$(CC) $(CFLAGS) $(BUILDIR)/measurements.o $(BUILDIR)/ssalloc.o $(BUILDIR)/linkedlist.o $(BUILDIR)/harris.o $(BUILDIR)/intset.o $(BUILDIR)/test.o -o $(BINS) $(LDFLAGS)
+main: measurements.o memalloc.o ssalloc.o linkedlist.o harris.o harris.o intset.o test.o $(TMILB)
+	$(CC) $(CFLAGS) $(BUILDIR)/measurements.o $(BUILDIR)/memalloc.o $(BUILDIR)/ssalloc.o $(BUILDIR)/linkedlist.o $(BUILDIR)/harris.o $(BUILDIR)/intset.o $(BUILDIR)/test.o -o $(BINS) $(LDFLAGS)
 
 clean:
 	-rm -f $(BINS)

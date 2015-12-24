@@ -158,7 +158,7 @@ test(void* thread)
 #endif
     
   seeds = seed_rand();
-  memalloc_init(0, ID);
+  memalloc_init(ID);
 
   RR_INIT(phys_id);
   barrier_cross(&barrier);
@@ -244,7 +244,7 @@ test(void* thread)
   EXEC_IN_DEC_ID_ORDER_END(&barrier);
 
   SSPFDTERM();
-  memalloc_term(0);
+  memalloc_term();
   THREAD_END();
   pthread_exit(NULL);
 }
@@ -254,7 +254,7 @@ main(int argc, char **argv)
 {
   set_cpu(0);
   ssalloc_init();
-  memalloc_init(0, num_threads);
+  memalloc_init(num_threads);
   seeds = seed_rand();
 
   struct option long_options[] = {

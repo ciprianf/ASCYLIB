@@ -132,7 +132,7 @@ harris_search(intset_t *set, skey_t key, node_t **left_node)
 	    {
 	      node_t* free = cur;
 	      cur = (node_t*) get_unmarked_ref((long) cur->next);
-	      ssmem_free(alloc, (void*) free);
+        memalloc_free((void*) free);
 	    }
 	  while (cur != right_node);
 #endif
@@ -185,7 +185,7 @@ harris_insert(intset_t *set, skey_t key, sval_t val)
 #if GC == 1
 	  if (unlikely(newnode != NULL))
 	    {
-	      ssmem_free(alloc, (void*) newnode);
+        memalloc_free((void*) newnode);
 	    }
 #endif
 	  return 0;
@@ -242,10 +242,7 @@ harris_delete(intset_t *set, skey_t key)
 
   if (likely(ATOMIC_CAS_MB(&left_node->next, right_node, right_node_next)))
     {
-#if GC == 1
-      ssmem_free(alloc, (void*) get_unmarked_ref((long) right_node));
-#endif
-      ;
+      memalloc_free((void*) get_unmarked_ref((long) right_node));
     }
   else
     {
@@ -261,6 +258,7 @@ set_size(intset_t *set)
   int size = 0;
   node_t* node;
 
+  memalloc_unsafe_to_reclaim();
   /* We have at least 2 elements */
   node = (node_t*) get_unmarked_ref((long) set->head->next);
   while ((node_t*) get_unmarked_ref((long) node->next) != NULL)
@@ -268,5 +266,6 @@ set_size(intset_t *set)
       if (!is_marked_ref((long) node->next)) size++;
       node = (node_t*) get_unmarked_ref((long) node->next);
     }
+  memalloc_safe_to_reclaim();
   return size;
 }

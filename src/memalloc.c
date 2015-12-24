@@ -10,7 +10,23 @@
 	#include "ssalloc.h"
 #endif
 
-void memalloc_init(unsigned int index, int id) {
+void memalloc_init(int id) {
+	memalloc_init_idx(0, id);
+}
+
+void memalloc_term() {
+	memalloc_term_idx(0);
+}
+
+void* memalloc_alloc(size_t size) {
+	return memalloc_alloc_idx(0, size);
+}
+
+void memalloc_free(void *ptr) {
+	memalloc_free_idx(0, ptr);
+}
+
+void memalloc_init_idx(unsigned int index, int id) {
 	#if GC == 1
 		allocs[index] = (ssmem_allocator_t*) malloc(sizeof(ssmem_allocator_t));
 		assert(allocs[index] != NULL);
@@ -23,7 +39,8 @@ void memalloc_init(unsigned int index, int id) {
 	#endif
 }
 
-void memalloc_term(unsigned int index) {
+
+void memalloc_term_idx(unsigned int index) {
 	#if GC == 1
 		ssmem_term();
 		free(allocs[index]);
@@ -34,7 +51,7 @@ void memalloc_term(unsigned int index) {
 	#endif
 }
 
-void* memalloc_alloc(unsigned int index, size_t size) {
+void* memalloc_alloc_idx(unsigned int index, size_t size) {
 	#if GC == 1
 		return ssmem_alloc(allocs[index], size);
 	#elif GC == 2
@@ -44,7 +61,7 @@ void* memalloc_alloc(unsigned int index, size_t size) {
 	#endif
 }
 
-void memalloc_free(int index, void *ptr) {
+void memalloc_free_idx(int index, void *ptr) {
 	#if GC == 1
 		ssmem_free(allocs[index], ptr);
 	#elif GC == 2

@@ -38,8 +38,7 @@
 #include "common.h"
 #include "utils.h"
 #include "measurements.h"
-#include "ssalloc.h"
-#include "ssmem.h"
+#include "memalloc.h"
 
 #ifdef DEBUG
 #define IO_FLUSH                        fflush(NULL)
@@ -50,7 +49,6 @@
 #define DEFAULT_EFFECTIVE		1
 
 static volatile int stop;
-extern __thread ssmem_allocator_t* alloc;
 
 #define TRANSACTIONAL                   4
 

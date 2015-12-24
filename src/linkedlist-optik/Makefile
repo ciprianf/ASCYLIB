@@ -22,6 +22,9 @@ measurements.o:
 ssalloc.o:
 	$(CC) $(CFLAGS) -c -o $(BUILDIR)/ssalloc.o $(PROF)/ssalloc.c
 
+memalloc.o: ssalloc.o
+		$(CC) $(CFLAGS) -c -o $(BUILDIR)/memalloc.o $(BUILDIR)/ssalloc.o $(PROF)/memalloc.c
+
 htlock.o:
 	$(CC) $(CFLAGS) -c -o $(BUILDIR)/htlock.o $(PROF)/htlock.c
 
@@ -40,8 +43,8 @@ intset.o: linkedlist-lock.h linkedlist-optik.h clh.o
 test.o: linkedlist-lock.h linkedlist-optik.h intset.h
 	$(CC) $(CFLAGS) -c -o $(BUILDIR)/test.o $(TEST_FILE)
 
-main: measurements.o ssalloc.o linkedlist-lock.o linkedlist-optik.o intset.o test.o htlock.o clh.o
-	$(CC) $(CFLAGS) $(BUILDIR)/measurements.o $(BUILDIR)/ssalloc.o $(BUILDIR)/htlock.o $(BUILDIR)/clh.o $(BUILDIR)/linkedlist-lock.o $(BUILDIR)/linkedlist-optik.o $(BUILDIR)/intset.o $(BUILDIR)/test.o -o $(BINS) $(LDFLAGS) 
+main: measurements.o memalloc.o ssalloc.o linkedlist-lock.o linkedlist-optik.o intset.o test.o htlock.o clh.o
+	$(CC) $(CFLAGS) $(BUILDIR)/measurements.o $(BUILDIR)/memalloc.o $(BUILDIR)/ssalloc.o $(BUILDIR)/htlock.o $(BUILDIR)/clh.o $(BUILDIR)/linkedlist-lock.o $(BUILDIR)/linkedlist-optik.o $(BUILDIR)/intset.o $(BUILDIR)/test.o -o $(BINS) $(LDFLAGS) 
 
 clean:
 	rm -f $(BINS)

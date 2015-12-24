@@ -30,7 +30,7 @@ node_l_t*
 new_node_l(skey_t key, sval_t val, node_l_t* next, int initializing)
 {
   volatile node_l_t *node;
-  node = (volatile node_l_t *) memalloc_alloc(0, sizeof(node_l_t));
+  node = (volatile node_l_t *) memalloc_alloc(sizeof(node_l_t));
   
   if (node == NULL) 
     {
@@ -88,7 +88,7 @@ void
 node_delete_l(node_l_t *node) 
 {
   DESTROY_LOCK(&node->lock);
-  memalloc_free(0, (void*)node);
+  memalloc_free((void*)node);
 }
 
 static void set_delete_l_impl(intset_l_t *set)
@@ -100,10 +100,10 @@ static void set_delete_l_impl(intset_l_t *set)
     {
       next = node->next;
       DESTROY_LOCK(&node->lock);
-      memalloc_free(0, (void*)node);
+      memalloc_free((void*)node);
       node = next;
     }
-  memalloc_free(0, (void*)set);
+  ssfree((void*)set);
 }
 
 void set_delete_l(intset_l_t *set) {

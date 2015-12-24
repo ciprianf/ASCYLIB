@@ -33,6 +33,7 @@ set_contains(intset_t *set, skey_t key)
   IO_FLUSH;
 #endif
 	
+  memalloc_unsafe_to_reclaim();
 #ifdef SEQUENTIAL
   node_t *prev, *next;
 	
@@ -47,7 +48,7 @@ set_contains(intset_t *set, skey_t key)
 #elif defined LOCKFREE			
   result = harris_find(set, key);
 #endif	
-	
+	memalloc_safe_to_reclaim();
   return result;
 }
 
@@ -57,6 +58,7 @@ set_seq_add(intset_t* set, skey_t key, sval_t val)
   int result;
   node_t *prev, *next;
 	
+  memalloc_unsafe_to_reclaim();
   prev = set->head;
   next = prev->next;
   while (next->key < key) 
@@ -69,6 +71,7 @@ set_seq_add(intset_t* set, skey_t key, sval_t val)
     {
       prev->next = new_node(key, val, next, 0);
     }
+  memalloc_safe_to_reclaim();
   return result;
 }	
 		
@@ -81,11 +84,13 @@ set_add(intset_t *set, skey_t key, skey_t val)
   printf("++> set_add(%d)\n", (int)val);
   IO_FLUSH;
 #endif
+  memalloc_unsafe_to_reclaim();
 #ifdef SEQUENTIAL /* Unprotected */
   result = set_seq_add(set, key, val);
 #elif defined LOCKFREE
   result = harris_insert(set, key, val);
 #endif
+  memalloc_safe_to_reclaim();
   return result;
 }
 
@@ -98,7 +103,7 @@ set_remove(intset_t *set, skey_t key)
   printf("++> set_remove(%d)\n", (int)val);
   IO_FLUSH;
 #endif
-	
+	memalloc_unsafe_to_reclaim();
 #ifdef SEQUENTIAL /* Unprotected */
   node_t *prev, *next;
   prev = set->head;
@@ -112,12 +117,12 @@ set_remove(intset_t *set, skey_t key)
   if (result) 
     {
       prev->next = next->next;
-      free(next);
+      memalloc_free(next);
     }
 #elif defined LOCKFREE
   result = harris_delete(set, key);
 #endif
-	
+	memalloc_safe_to_reclaim();
   return result;
 }
 
