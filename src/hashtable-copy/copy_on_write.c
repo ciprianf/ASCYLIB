@@ -23,8 +23,7 @@
 
 #include "copy_on_write.h"
 
-__thread ssmem_allocator_t* alloc;
-
+__thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 size_t array_ll_fixed_size;
 
@@ -32,7 +31,7 @@ static inline volatile array_ll_t*
 array_ll_new_init(size_t size)
 {
   array_ll_t* all;
-  all = ssalloc_aligned(CACHE_LINE_SIZE, sizeof(array_ll_t) + (array_ll_fixed_size * sizeof(kv_t)));
+  all = memalloc_alloc(sizeof(array_ll_t) + (array_ll_fixed_size * sizeof(kv_t)));
   assert(all != NULL);
   
   all->size = size;
@@ -45,7 +44,7 @@ static inline array_ll_t*
 array_ll_new(size_t size)
 {
   array_ll_t* all;
-  all = ssmem_alloc(alloc, sizeof(array_ll_t) + (array_ll_fixed_size * sizeof(kv_t)));
+  all = memalloc_alloc(sizeof(array_ll_t) + (array_ll_fixed_size * sizeof(kv_t)));
   assert(all != NULL);
   
   all->size = size;
@@ -95,7 +94,7 @@ copy_on_write_new(size_t num_buckets)
 
 
 sval_t
-cpy_search(copy_on_write_t* set, skey_t key) 
+cpy_search_impl(copy_on_write_t* set, skey_t key) 
 {
   size_t bucket = key & set->hash;
 
@@ -114,6 +113,14 @@ cpy_search(copy_on_write_t* set, skey_t key)
 }
 
 sval_t
+cpy_search(copy_on_write_t* set, skey_t key) {
+  memalloc_unsafe_to_reclaim();
+  sval_t r = cpy_search_impl(set, key);
+  memalloc_safe_to_reclaim();
+  return r;
+}
+
+sval_t
 cpy_array_search(array_ll_t* all_cur, skey_t key) 
 {
   int i;
@@ -129,7 +136,7 @@ cpy_array_search(array_ll_t* all_cur, skey_t key)
 }
 
 sval_t
-cpy_delete(copy_on_write_t* set, skey_t key)
+cpy_delete_impl(copy_on_write_t* set, skey_t key)
 {
   size_t bucket = key & set->hash;
   array_ll_t* all_old;
@@ -166,11 +173,11 @@ cpy_delete(copy_on_write_t* set, skey_t key)
   if (removed)
     {
       set->array[bucket] = all_new;
-      ssmem_free(alloc, (void*) all_old);
+      memalloc_free((void*) all_old);
     }
   else
     {
-      ssmem_free(alloc, (void*) all_new);
+      memalloc_free((void*) all_new);
     }
 
   GL_UNLOCK(set->lock);
@@ -178,8 +185,17 @@ cpy_delete(copy_on_write_t* set, skey_t key)
   return removed;
 }
 
+sval_t
+cpy_delete(copy_on_write_t* set, skey_t key) {
+  sval_t r;
+  memalloc_unsafe_to_reclaim();
+  r = cpy_delete_impl(set, key);
+  memalloc_safe_to_reclaim();
+  return r;
+}
+
 int
-cpy_insert(copy_on_write_t* set, skey_t key, sval_t val) 
+cpy_insert_impl(copy_on_write_t* set, skey_t key, sval_t val) 
 {
   size_t bucket = key & set->hash;
   array_ll_t* all_old;
@@ -203,7 +219,7 @@ cpy_insert(copy_on_write_t* set, skey_t key, sval_t val)
     {
       if (unlikely(all_old->kvs[i].key == key))
 	{
-	  ssmem_free(alloc, (void*) all_new);
+	  memalloc_free((void*) all_new);
 	  GL_UNLOCK(set->lock);
 	  UNLOCK(set->lock + bucket);
 	  return 0;
@@ -216,11 +232,20 @@ cpy_insert(copy_on_write_t* set, skey_t key, sval_t val)
   all_new->kvs[i].val = val;
   
   set->array[bucket] = all_new;
-  ssmem_free(alloc, (void*) all_old);
+  memalloc_free((void*) all_old);
 
   GL_UNLOCK(set->lock);
   UNLOCK(set->lock + bucket);
   return 1;
+}
+
+int
+cpy_insert(copy_on_write_t* set, skey_t key, sval_t val) {
+  int r;
+  memalloc_unsafe_to_reclaim();
+  r = cpy_insert_impl(set, key, val);
+  memalloc_safe_to_reclaim();
+  return r;
 }
 
 size_t
@@ -228,11 +253,12 @@ copy_on_write_size(copy_on_write_t* set)
 {
   size_t s = 0;
   int i;
+  memalloc_unsafe_to_reclaim();
   for (i = 0; i < set->num_buckets; i++)
     {
       s += set->array[i]->size;
     }
-
+  memalloc_safe_to_reclaim();
   return s;
 };
 

@@ -41,8 +41,7 @@
 #include "common.h"
 #include "utils.h"
 #include "measurements.h"
-#include "ssalloc.h"
-#include "ssmem.h"
+#include "memalloc.h"
 
 #define DEFAULT_ALTERNATE		0
 #define DEFAULT_EFFECTIVE		1
