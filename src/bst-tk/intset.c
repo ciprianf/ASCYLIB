@@ -26,17 +26,29 @@
 sval_t
 set_contains(intset_t* set, skey_t key)
 {
-  return bst_tk_find(set, key);
+  sval_t r;
+  memalloc_unsafe_to_reclaim();
+  r = bst_tk_find(set, key);
+  memalloc_safe_to_reclaim();
+  return r;
 }
 
 int
 set_add(intset_t* set, skey_t key, sval_t val)
 {  
-  return bst_tk_insert(set, key, val);
+  int r;
+  memalloc_unsafe_to_reclaim();
+  r = bst_tk_insert(set, key, val);
+  memalloc_safe_to_reclaim();
+  return r;
 }
 
 sval_t
 set_remove(intset_t* set, skey_t key)
 {
-  return bst_tk_delete(set, key);
+  sval_t r;
+  memalloc_unsafe_to_reclaim();
+  r = bst_tk_delete(set, key);
+  memalloc_safe_to_reclaim();
+  return r;
 }

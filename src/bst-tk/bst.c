@@ -23,24 +23,13 @@
 #include "intset.h"
 #include "utils.h"
 
-__thread ssmem_allocator_t* alloc;
+__thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 node_t*
 new_node(skey_t key, sval_t val, node_t* l, node_t* r, int initializing)
 {
   node_t* node;
-#if GC == 1
-  if (likely(!initializing))		/* for initialization AND the coupling algorithm */
-    {
-      node = (node_t*) ssmem_alloc(alloc, sizeof(node_t));
-    }
-  else
-    {
-      node = (node_t*) ssalloc(sizeof(node_t));
-    }
-#else
-  node = (node_t*) ssalloc(sizeof(node_t));
-#endif
+  node = memalloc_alloc(sizeof(node_t));
   
   if (node == NULL) 
     {
@@ -61,11 +50,7 @@ node_t*
 new_node_no_init()
 {
   node_t* node;
-#if GC == 1
-  node = (node_t*) ssmem_alloc(alloc, sizeof(node_t));
-#else
-  node = (node_t*) ssalloc(sizeof(node_t));
-#endif
+  node = memalloc_alloc(sizeof(node_t));
   if (unlikely(node == NULL))
     {
       perror("malloc @ new_node");
@@ -100,11 +85,7 @@ intset_t* set_new()
 void
 node_delete(node_t *node) 
 {
-#if GC == 1
-  ssmem_free(alloc, node);
-#else
-  /* ssfree(node); */
-#endif
+  memalloc_free(node);
 }
 
 void
@@ -129,7 +110,9 @@ node_size(node_t* n)
 int 
 set_size(intset_t* set)
 {
+  memalloc_unsafe_to_reclaim();
   int size = node_size(set->head) - 2;
+  memalloc_safe_to_reclaim();
   return size;
 }
 

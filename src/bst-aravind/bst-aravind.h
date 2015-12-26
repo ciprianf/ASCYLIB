@@ -30,8 +30,7 @@
 #include "lock_if.h"
 #include "common.h"
 #include "atomic_ops_if.h"
-#include "ssalloc.h"
-#include "ssmem.h"
+#include "memalloc.h"
 
 #define max(a,b) \
    ({ __typeof__ (a) _a = (a); \
@@ -52,7 +51,7 @@
 
 typedef uint8_t bool_t;
 
-extern __thread ssmem_allocator_t* alloc;
+extern __thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 typedef ALIGNED(64) struct node_t node_t;
 

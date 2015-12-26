@@ -40,11 +40,10 @@
 #include "common.h"
 #include "utils.h"
 #include "measurements.h"
-#include "ssalloc.h"
-#include "ssmem.h"
+#include "memalloc.h"
 
 static volatile int stop;
-extern __thread ssmem_allocator_t* alloc;
+extern __thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 
 typedef union tl32

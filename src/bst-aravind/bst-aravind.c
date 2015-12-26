@@ -26,7 +26,7 @@
 RETRY_STATS_VARS;
 
 __thread seek_record_t* seek_record;
-__thread ssmem_allocator_t* alloc;
+__thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 node_t* initialize_tree(){
     node_t* r;
@@ -57,15 +57,7 @@ void bst_init_local() {
 
 node_t* create_node(skey_t k, sval_t value, int initializing) {
     volatile node_t* new_node;
-#if GC == 1
-    if (unlikely(initializing)) {
-        new_node = (volatile node_t*) ssalloc_aligned(CACHE_LINE_SIZE, sizeof(node_t));
-    } else {
-        new_node = (volatile node_t*) ssmem_alloc(alloc, sizeof(node_t));
-    }
-#else 
-    new_node = (volatile node_t*) ssalloc(sizeof(node_t));
-#endif
+    new_node = (volatile node_t*) memalloc_alloc(sizeof(node_t));
     if (new_node == NULL) {
         perror("malloc in bst create node");
         exit(1);
@@ -116,16 +108,20 @@ seek_record_t * bst_seek(skey_t key, node_t* node_r){
 }
 
 sval_t bst_search(skey_t key, node_t* node_r) {
+   sval_t r;
+   memalloc_unsafe_to_reclaim();
    bst_seek(key, node_r);
    if (seek_record->leaf->key == key) {
-        return seek_record->leaf->value;
+        r = seek_record->leaf->value;
    } else {
-        return 0;
+        r = 0;
    }
+   memalloc_safe_to_reclaim();
+   return r;
 }
 
 
-bool_t bst_insert(skey_t key, sval_t val, node_t* node_r) {
+bool_t bst_insert_impl(skey_t key, sval_t val, node_t* node_r) {
     node_t* new_internal = NULL;
     node_t* new_node = NULL;
     uint created = 0;
@@ -134,12 +130,10 @@ bool_t bst_insert(skey_t key, sval_t val, node_t* node_r) {
 
         bst_seek(key, node_r);
         if (seek_record->leaf->key == key) {
-#if GC == 1
             if (created) {
-                ssmem_free(alloc, new_internal);
-                ssmem_free(alloc, new_node);
+                memalloc_free(new_internal);
+                memalloc_free(new_node);
             }
-#endif
             return FALSE;
         }
         node_t* parent = seek_record->parent;
@@ -170,7 +164,7 @@ bool_t bst_insert(skey_t key, sval_t val, node_t* node_r) {
 #endif
         node_t* result = CAS_PTR(child_addr, ADDRESS(leaf), ADDRESS(new_internal));
         if (result == ADDRESS(leaf)) {
-            return TRUE;
+          return TRUE;
         }
         node_t* chld = *child_addr; 
         if ( (ADDRESS(chld)==leaf) && (GETFLAG(chld) || GETTAG(chld)) ) {
@@ -179,7 +173,15 @@ bool_t bst_insert(skey_t key, sval_t val, node_t* node_r) {
     }
 }
 
-sval_t bst_remove(skey_t key, node_t* node_r) {
+bool_t bst_insert(skey_t key, sval_t val, node_t* node_r) {
+    bool_t r;
+    memalloc_unsafe_to_reclaim();
+    r = bst_insert_impl(key, val, node_r);
+    memalloc_safe_to_reclaim();
+    return r;
+}
+
+sval_t bst_remove_impl(skey_t key, node_t* node_r) {
     bool_t injecting = TRUE; 
     node_t* leaf;
     sval_t val = 0;
@@ -229,8 +231,15 @@ sval_t bst_remove(skey_t key, node_t* node_r) {
     }
 }
 
+sval_t bst_remove(skey_t key, node_t* node_r) {
+    sval_t r;
+    memalloc_unsafe_to_reclaim();
+    r = bst_remove_impl(key, node_r);
+    memalloc_safe_to_reclaim();
+    return r;
+}
 
-bool_t bst_cleanup(skey_t key) {
+bool_t bst_cleanup_impl(skey_t key) {
     node_t* ancestor = seek_record->ancestor;
     node_t* successor = seek_record->successor;
     node_t* parent = seek_record->parent;
@@ -274,16 +283,22 @@ bool_t bst_cleanup(skey_t key) {
 
     node_t* sibl = *sibling_addr;
     if ( CAS_PTR(succ_addr, ADDRESS(successor), UNTAG(sibl)) == ADDRESS(successor)) {
-#if GC == 1
-    ssmem_free(alloc, ADDRESS(chld));
-    ssmem_free(alloc, ADDRESS(successor));
-#endif
+    memalloc_free(ADDRESS(chld));
+    memalloc_free(ADDRESS(successor));
         return TRUE;
     }
     return FALSE;
 }
 
-uint32_t bst_size(volatile node_t* node) {
+bool_t bst_cleanup(skey_t key) {
+    bool_t r;
+    memalloc_unsafe_to_reclaim();
+    r = bst_cleanup_impl(key);
+    memalloc_safe_to_reclaim();
+    return r;
+}
+
+uint32_t bst_size_impl(volatile node_t* node) {
     if (node == NULL) return 0; 
     if ((node->left == NULL) && (node->right == NULL)) {
        if (node->key < INF0 ) return 1;
@@ -299,4 +314,10 @@ uint32_t bst_size(volatile node_t* node) {
     return l+r;
 }
 
-
+uint32_t bst_size(volatile node_t* node) {
+  uint32_t r;
+  memalloc_unsafe_to_reclaim();
+  r = bst_size_impl(node);
+  memalloc_safe_to_reclaim();
+  return r;
+}

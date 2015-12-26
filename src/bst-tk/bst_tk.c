@@ -107,10 +107,8 @@ bst_tk_delete(intset_t* set, skey_t key)
 
   tl_unlock(&ppred->lock, pright);
 
-#if GC == 1
-  ssmem_free(alloc, curr);
-  ssmem_free(alloc, pred);
-#endif
+  memalloc_free(curr);
+  memalloc_free(pred);
 
   return curr->val;
 } 
@@ -187,8 +185,8 @@ bst_tk_insert(intset_t* set, skey_t key, sval_t val)
 
   if ((!tl_trylock_version(&pred->lock, (volatile tl_t*) &pred_ver, right)))
     {
-      ssmem_free(alloc, nn);
-      ssmem_free(alloc, nr);
+      memalloc_free(nn);
+      memalloc_free(nr);
       goto retry;
     }
 
