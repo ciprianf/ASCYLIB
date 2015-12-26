@@ -67,7 +67,7 @@ void memalloc_free_idx(int index, void *ptr) {
 	#elif GC == 2
 		gcmem_free(ptr);
 	#else
-		ssfree(ptr);
+		//ssfree(ptr);
 	#endif
 }
 
