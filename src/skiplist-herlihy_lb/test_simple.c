@@ -157,12 +157,7 @@ test(void* thread)
 #endif
     
   seeds = seed_rand();
-#if GC == 1
-  alloc = (ssmem_allocator_t*) malloc(sizeof(ssmem_allocator_t));
-  assert(alloc != NULL);
-  ssmem_alloc_init_fs_size(alloc, SSMEM_DEFAULT_MEM_SIZE, SSMEM_GC_FREE_SET_SIZE, ID);
-#endif
-    
+  memalloc_init(ID);
 
   RR_INIT(phys_id);
   barrier_cross(&barrier);
@@ -249,10 +244,7 @@ test(void* thread)
   EXEC_IN_DEC_ID_ORDER_END(&barrier);
 
   SSPFDTERM();
-#if GC == 1
-  ssmem_term();
-  free(alloc);
-#endif
+  memalloc_term();
   THREAD_END();
   pthread_exit(NULL);
 }
@@ -262,6 +254,7 @@ main(int argc, char **argv)
 {
   set_cpu(0);
   ssalloc_init();
+  memalloc_init(num_threads);
   seeds = seed_rand();
 
   struct option long_options[] = {

@@ -344,9 +344,7 @@ optimistic_delete(sl_intset_t *set, skey_t key)
 	    }
 
 	  sval_t val = node_todel->val;
-#if GC == 1
-	  ssmem_free(alloc, (void*) node_todel);
-#endif
+    memalloc_free((void*) node_todel);
 
 	  UNLOCK(ND_GET_LOCK(node_todel));
 	  unlock_levels(set, preds, highest_locked);

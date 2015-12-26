@@ -162,9 +162,7 @@ fraser_remove(sl_intset_t *set, skey_t key)
       mark_node_ptrs(succs[0]);
 
       result = succs[0]->val;
-#if GC == 1
-      ssmem_free(alloc, (void*)succs[0]);
-#endif
+      memalloc_free((void*)succs[0]);
       /* MEM_BARRIER; */
       fraser_search(set, key, NULL, NULL);
     }

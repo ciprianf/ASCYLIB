@@ -40,8 +40,7 @@
 
 #include "common.h"
 #include "utils.h"
-#include "ssalloc.h"
-#include "ssmem.h"
+#include "memalloc.h"
 
 #define DEFAULT_ELASTICITY              4
 #define DEFAULT_ALTERNATE               0

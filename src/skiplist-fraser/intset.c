@@ -29,7 +29,7 @@ sval_t
 sl_contains(sl_intset_t *set, skey_t key)
 {
   sval_t result = 0;
-	
+	memalloc_unsafe_to_reclaim();
 #ifdef SEQUENTIAL /* Unprotected */
 	
   int i;
@@ -51,7 +51,7 @@ sl_contains(sl_intset_t *set, skey_t key)
 #elif defined LOCKFREE /* fraser lock-free */
   result = fraser_find(set, key);
 #endif
-	
+	memalloc_safe_to_reclaim();
   return result;
 }
 
@@ -62,6 +62,7 @@ sl_seq_add(sl_intset_t *set, skey_t key, sval_t val)
   sl_node_t *node, *next;
   sl_node_t *preds[MAXLEVEL], *succs[MAXLEVEL];
 	
+  memalloc_unsafe_to_reclaim();
   node = set->head;
   for (i = node->toplevel-1; i >= 0; i--) 
     {
@@ -85,6 +86,7 @@ sl_seq_add(sl_intset_t *set, skey_t key, sval_t val)
 	  preds[i]->next[i] = node;
 	}
     }
+  memalloc_safe_to_reclaim();
   return result;
 }
 
@@ -92,11 +94,13 @@ int
 sl_add(sl_intset_t *set, skey_t key, sval_t val)
 {
   int result = 0;
+  memalloc_unsafe_to_reclaim();
 #ifdef SEQUENTIAL
   result = sl_seq_add(set, key, val);
 #elif defined LOCKFREE /* fraser lock-free */
   result = fraser_insert(set, key, val);
 #endif
+  memalloc_safe_to_reclaim();
   return result;
 }
 
@@ -104,7 +108,7 @@ sval_t
 sl_remove(sl_intset_t *set, skey_t key)
 {
   sval_t result = 0;
-	
+	memalloc_unsafe_to_reclaim();
 #ifdef SEQUENTIAL
   int i;
   sl_node_t *node, *next = NULL;
@@ -133,7 +137,7 @@ sl_remove(sl_intset_t *set, skey_t key)
 #elif defined LOCKFREE
   result = fraser_remove(set, key);
 #endif
-	
+	memalloc_safe_to_reclaim();
   return result;
 }
 

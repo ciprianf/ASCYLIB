@@ -194,11 +194,7 @@ sl_optik_insert(sl_intset_t* set, skey_t key, sval_t val)
 	    {
 	      if (unlikely(node_new != NULL))
 		{
-#if GC == 1
-		  ssmem_free(alloc, (void*) node_new);
-#else
-		  ssfree(node_new);
-#endif
+      memalloc_free((void*) node_new);
 		} 
 	      return 0;
 	    }
@@ -298,9 +294,7 @@ sl_optik_delete(sl_intset_t* set, skey_t key)
 
   unlock_levels_down(preds, 0, toplevel_nf - 1);
 
-#if GC == 1
-  ssmem_free(alloc, (void*) node_found);
-#endif
+  memalloc_free((void*) node_found);
 
   return node_found->val;
 }

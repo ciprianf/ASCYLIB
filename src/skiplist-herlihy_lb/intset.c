@@ -26,17 +26,29 @@
 inline sval_t
 sl_contains(sl_intset_t *set, skey_t key)
 {
-  return optimistic_find(set, key);
+  sval_t r;
+  memalloc_unsafe_to_reclaim();
+  r = optimistic_find(set, key);
+  memalloc_safe_to_reclaim();
+  return r;
 }
 
 inline int
 sl_add(sl_intset_t *set, skey_t key, sval_t val)
 {  
-  return optimistic_insert(set, key, val);
+  int r;
+  memalloc_unsafe_to_reclaim();
+  r = optimistic_insert(set, key, val);
+  memalloc_safe_to_reclaim();
+  return r;
 }
 
 inline sval_t
 sl_remove(sl_intset_t *set, skey_t key)
 {
-  return optimistic_delete(set, key);
+  sval_t r;
+  memalloc_unsafe_to_reclaim();
+  r = optimistic_delete(set, key);
+  memalloc_safe_to_reclaim();
+  return r;
 }

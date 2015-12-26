@@ -36,7 +36,7 @@
 
 #include <atomic_ops.h>
 #include "lock_if.h"
-#include "ssmem.h"
+#include "memalloc.h"
 
 #define DEFAULT_ELASTICITY		4
 #define DEFAULT_ALTERNATE               0

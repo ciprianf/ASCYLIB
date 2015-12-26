@@ -25,7 +25,7 @@
 
 unsigned int levelmax;
 unsigned int size_pad_32;
-__thread ssmem_allocator_t* alloc;
+__thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 inline int
 get_rand_level()
@@ -62,22 +62,21 @@ sl_node_t*
 sl_new_simple_node(skey_t key, sval_t val, int toplevel, int transactional)
 {
   sl_node_t *node;
-
+  size_t ns = size_pad_32;
 #if GC == 1
   if (unlikely(transactional))
     {
       /* use levelmax instead of toplevel in order to be able to use the ssalloc allocator*/
-      size_t ns = size_pad_32;
+      ns = size_pad_32;
       size_t ns_rm = ns & 63;
       if (ns_rm)
       	{
       	  ns += 64 - ns_rm;
       	}
-      node = (sl_node_t*) ssalloc(ns);
     }
   else 
     {
-      size_t ns = size_pad_32;
+      ns = size_pad_32;
 #  if defined(DO_PAD)
       size_t ns_rm = size_pad_32;
       if (ns_rm)
@@ -85,11 +84,10 @@ sl_new_simple_node(skey_t key, sval_t val, int toplevel, int transactional)
 	  ns += 64 - ns_rm;
 	}
 #  endif
-      node = (sl_node_t*) ssmem_alloc(alloc, ns);
     }
 #else
   /* use levelmax instead of toplevel in order to be able to use the ssalloc allocator*/
-  size_t ns = size_pad_32;
+  ns = size_pad_32;
   if (transactional)
     {
       size_t ns_rm = ns & 63;
@@ -98,8 +96,9 @@ sl_new_simple_node(skey_t key, sval_t val, int toplevel, int transactional)
 	  ns += 64 - ns_rm;
 	}
     }
-  node = (sl_node_t *)ssalloc(ns);
 #endif
+
+  node = (sl_node_t*) memalloc_alloc(ns);
 
   if (node == NULL)
     {
@@ -144,12 +143,7 @@ sl_new_node(skey_t key, sval_t val, sl_node_t *next, int toplevel, int transacti
 void
 sl_delete_node(sl_node_t *n)
 {
-  /* free(n); */
-#if GC == 1
-  ssmem_free(alloc, (void*) n);
-#else
-  ssfree(n);
-#endif
+  memalloc_free((void*)n);
 }
 
 sl_intset_t*
@@ -174,7 +168,7 @@ void
 sl_set_delete(sl_intset_t *set)
 {
   sl_node_t *node, *next;
-
+  memalloc_unsafe_to_reclaim();
   node = set->head;
   while (node != NULL)
     {
@@ -182,6 +176,7 @@ sl_set_delete(sl_intset_t *set)
       sl_delete_node(node);
       node = next;
     }
+  memalloc_safe_to_reclaim();
   ssfree(set);
 }
 
@@ -190,7 +185,7 @@ sl_set_size(sl_intset_t *set)
 {
   int size = 0;
   sl_node_t *node;
-
+  memalloc_unsafe_to_reclaim();
   node = GET_UNMARKED(set->head->next[0]);
   while (node->next[0] != NULL)
     {
@@ -200,6 +195,6 @@ sl_set_size(sl_intset_t *set)
 	}
       node = GET_UNMARKED(node->next[0]);
     }
-
+  memalloc_safe_to_reclaim();
   return size;
 }

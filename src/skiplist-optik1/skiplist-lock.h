@@ -34,11 +34,11 @@
 
 #include <atomic_ops.h>
 #include "lock_if.h"
-#include "ssmem.h"
+#include "memalloc.h"
 #include "optik.h"
 
 extern unsigned int global_seed;
-extern __thread ssmem_allocator_t* alloc;
+extern __thread ssmem_allocator_t* allocs[MEM_MAX_ALLOCATORS];
 
 extern unsigned int levelmax, size_pad_32;
 
